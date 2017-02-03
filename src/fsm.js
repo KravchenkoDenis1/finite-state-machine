@@ -4,10 +4,10 @@ class FSM {
      * @param config
      */
     constructor(config) {
-		this.actual = config.initial ;
+		this.actual = config.initial;
 		this.states = config.states;
 		this.transitions = config.states.transitions;
-		this.history = ['normal'];
+		this.history = [config.initial];
 		this.length = 1;
 		this.undoValue = 1;
 		this.redoValue = 0;
@@ -27,7 +27,7 @@ class FSM {
      */
     changeState(state) {
 		var i = this.length;
-		if (state === 'normal' || state === 'hungry' || state === 'busy' || state === 'sleeping'){
+		if (state in this.states){
 			this.actual = state;
 			this.history[i] = state;
 			this.length++;
@@ -44,41 +44,20 @@ class FSM {
      */
     trigger(event) {
 		var i = this.length;
-		if (event === 'study') {
-			this.actual = 'busy';
-			this.history[i] = 'busy';
-			this.length++;
-			this.undoValue++;
-			this.redoValue = 0;
-		} else if (event === 'eat' && this.actual === 'busy') {
-			throw new Error();
-		} else if (event === 'get_up' && this.actual === 'busy'){
-			throw new Error();
-		} else if (event === 'get_hungry'){
-			this.actual = 'hungry';
-			this.history[i] = 'hungry';
-			this.length++;
-			this.undoValue++;
-			this.redoValue = 0;
-		} else if (event === 'eat') {
-			this.actual = 'normal';
-			this.history[i] = 'eat';
-			this.length++;
-			this.undoValue++;
-			this.redoValue = 0;
-		} else if (event === 'get_tired'){
-			this.actual = 'sleeping';
-			this.history[i] = 'sleeping';
-			this.length++;
-			this.undoValue++;
-			this.redoValue = 0;
-		} else if (event === 'eat'){
-			this.actual = 'normal';
-			this.history[i] = 'normal';
-			this.length++;
-			this.undoValue++;
-			this.redoValue = 0;
-		} else {
+		var j = this.actual;
+		var obj = this.states;
+		var checkTrigger = 0;
+			if (event in obj[j].transitions) {
+				this.actual = obj[j].transitions[event];
+				this.history[i] = obj[j].transitions[event];
+				this.length++;
+				this.undoValue++;
+				this.redoValue = 0;
+				checkTrigger = 1;
+			} else {
+				throw new Error();
+			}
+		if (checkTrigger === 0){
 			throw new Error();
 		}
 	}
@@ -87,7 +66,7 @@ class FSM {
      * Resets FSM state to initial.
      */
     reset() {
-		this.actual = 'normal';
+		this.actual = this.history[0];
 	}
 
     /**
@@ -98,13 +77,23 @@ class FSM {
      */
     getStates(event) {
 		var mas = [];
+		var j = 0;
+		var i = 0;
+		var obj = this.states;
 		if (event == null) {
-			mas = ['normal', 'busy', 'hungry', 'sleeping'];
-		} else if (event === 'get_hungry'){
-			mas = ['busy','sleeping'];
-		} else if (event === 'study'){
-			mas = ['normal'];
+			for (j in obj) {
+				mas[i] = j;
+				i++;
+			}
+		} 
+		for (j in obj){
+			if (event in obj[j].transitions) {
+				mas[i] = j;
+				i++;
+			}
 		}
+			
+		
 		return mas;
 	}
 
